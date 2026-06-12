@@ -1,0 +1,3 @@
+# Theoretical background
+
+RNA-seq preprocessing documents library quality, removes adapters/low-quality bases and quantifies reads against a reference transcriptome/genome. For gene-level inference, STAR + featureCounts produces integer counts suitable for DESeq2. Salmon provides transcript-level estimates for isoform-oriented analyses. In preeclampsia, separating fetal and maternal placental compartments and early vs late disease is essential because each contrast may reflect distinct biological mechanisms such as hypoxia, immune activation, secretion, extracellular matrix remodelling and endothelial dysfunction.

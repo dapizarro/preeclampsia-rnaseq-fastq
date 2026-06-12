@@ -1,0 +1,15 @@
+name: preeclampsia-rnaseq
+channels: [conda-forge, bioconda]
+dependencies:
+  - snakemake>=8
+  - fastqc
+  - multiqc
+  - fastp
+  - star
+  - subread
+  - salmon
+  - samtools
+  - rseqc
+  - pandas
+  - pyyaml
+  - python>=3.10

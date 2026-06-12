@@ -1,0 +1,74 @@
+import pandas as pd, yaml
+configfile: "config/config.yaml"
+SAMPLES = pd.read_csv(config["samples"], sep="\t")
+SAMPLE_IDS = SAMPLES["sample"].tolist()
+FASTQ1 = dict(zip(SAMPLES["sample"], SAMPLES["fastq_1"]))
+FASTQ2 = dict(zip(SAMPLES["sample"], SAMPLES["fastq_2"]))
+ref = yaml.safe_load(open(config["reference"]))
+
+rule all:
+    input:
+        "results/qc/multiqc/multiqc_report.html",
+        "results/counts/gene_counts.tsv",
+        expand("results/alignment/star/{sample}.sorted.bam.bai", sample=SAMPLE_IDS),
+        expand("results/salmon/{sample}/quant.sf", sample=SAMPLE_IDS)
+
+rule fastqc_raw:
+    input: r1=lambda wc: FASTQ1[wc.sample], r2=lambda wc: FASTQ2[wc.sample]
+    output:
+        "results/qc/fastqc/raw/{sample}_R1_fastqc.html",
+        "results/qc/fastqc/raw/{sample}_R1_fastqc.zip",
+        "results/qc/fastqc/raw/{sample}_R2_fastqc.html",
+        "results/qc/fastqc/raw/{sample}_R2_fastqc.zip"
+    threads: config["threads"]["fastqc"]
+    shell: "fastqc -t {threads} -o results/qc/fastqc/raw {input.r1} {input.r2}"
+
+rule fastp:
+    input: r1=lambda wc: FASTQ1[wc.sample], r2=lambda wc: FASTQ2[wc.sample]
+    output:
+        r1="results/trimmed_fastq/{sample}_R1.trimmed.fastq.gz",
+        r2="results/trimmed_fastq/{sample}_R2.trimmed.fastq.gz",
+        html="results/qc/fastp/{sample}.html",
+        json="results/qc/fastp/{sample}.json"
+    threads: config["threads"]["fastp"]
+    params: extra=config["params"]["fastp_extra"]
+    shell: "fastp -i {input.r1} -I {input.r2} -o {output.r1} -O {output.r2} --thread {threads} --html {output.html} --json {output.json} {params.extra}"
+
+rule star_align:
+    input: r1="results/trimmed_fastq/{sample}_R1.trimmed.fastq.gz", r2="results/trimmed_fastq/{sample}_R2.trimmed.fastq.gz"
+    output: bam="results/alignment/star/{sample}.sorted.bam"
+    threads: config["threads"]["star"]
+    params: index=lambda wc: ref["star_index"], prefix="results/alignment/star/{sample}."
+    shell: "STAR --runThreadN {threads} --genomeDir {params.index} --readFilesIn {input.r1} {input.r2} --readFilesCommand zcat --outSAMtype BAM SortedByCoordinate --outFileNamePrefix {params.prefix} && mv {params.prefix}Aligned.sortedByCoord.out.bam {output.bam}"
+
+rule index_bam:
+    input: "results/alignment/star/{sample}.sorted.bam"
+    output: "results/alignment/star/{sample}.sorted.bam.bai"
+    shell: "samtools index {input}"
+
+rule featurecounts:
+    input: bams=expand("results/alignment/star/{sample}.sorted.bam", sample=SAMPLE_IDS)
+    output: "results/counts/featureCounts.raw.txt"
+    threads: config["threads"]["featurecounts"]
+    params: gtf=lambda wc: ref["gtf"], stranded=config["params"]["strandedness"]
+    shell: "featureCounts -T {threads} -p -s {params.stranded} -a {params.gtf} -o {output} {input.bams}"
+
+rule merge_featurecounts:
+    input: "results/counts/featureCounts.raw.txt"
+    output: "results/counts/gene_counts.tsv"
+    shell: "python scripts/merge_featurecounts.py --featurecounts {input} --out {output}"
+
+rule salmon_quant:
+    input: r1="results/trimmed_fastq/{sample}_R1.trimmed.fastq.gz", r2="results/trimmed_fastq/{sample}_R2.trimmed.fastq.gz"
+    output: "results/salmon/{sample}/quant.sf"
+    threads: config["threads"]["salmon"]
+    params: index=lambda wc: ref["salmon_index"], libtype=config["params"]["salmon_libtype"]
+    shell: "salmon quant -i {params.index} -l {params.libtype} -1 {input.r1} -2 {input.r2} -p {threads} --validateMappings -o results/salmon/{wildcards.sample}"
+
+rule multiqc:
+    input:
+        expand("results/qc/fastqc/raw/{sample}_R1_fastqc.zip", sample=SAMPLE_IDS),
+        expand("results/qc/fastp/{sample}.json", sample=SAMPLE_IDS),
+        expand("results/alignment/star/{sample}.sorted.bam.bai", sample=SAMPLE_IDS)
+    output: "results/qc/multiqc/multiqc_report.html"
+    shell: "multiqc results -o results/qc/multiqc"

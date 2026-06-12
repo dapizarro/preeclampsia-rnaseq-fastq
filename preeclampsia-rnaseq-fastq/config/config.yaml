@@ -1,0 +1,12 @@
+samples: config/samples.tsv
+reference: config/reference.yaml
+threads:
+  fastqc: 2
+  fastp: 4
+  star: 12
+  featurecounts: 8
+  salmon: 8
+params:
+  strandedness: 0
+  salmon_libtype: A
+  fastp_extra: "--detect_adapter_for_pe --length_required 30"

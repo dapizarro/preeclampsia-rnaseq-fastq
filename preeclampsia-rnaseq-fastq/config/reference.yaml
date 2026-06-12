@@ -1,0 +1,5 @@
+genome_fasta: data/reference/GRCh38.primary_assembly.fa
+gtf: data/reference/gencode.annotation.gtf
+star_index: data/reference/star_index
+salmon_index: data/reference/salmon_index
+read_length: 150
