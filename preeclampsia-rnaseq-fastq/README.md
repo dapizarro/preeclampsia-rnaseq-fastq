@@ -1,6 +1,6 @@
-# Preeclampsia RNA-seq FASTQ pipeline
+# RNA-seq FASTQ pipeline
 
-Reproducible Snakemake workflow for processing raw paired-end placental RNA-seq FASTQ files into gene- and transcript-level count matrices.
+Reproducible Snakemake workflow for processing raw paired-end RNA-seq FASTQ files into gene- and transcript-level count matrices.
 
 This is **Part I** of the project:
 
@@ -49,6 +49,3 @@ results/counts/gene_counts.tsv
 results/salmon/*/quant.sf
 ```
 
-## Biological scope
-
-The project is designed for placental RNA-seq in control, early-onset preeclampsia and late-onset preeclampsia, separating fetal and maternal placental compartments.
