@@ -1,51 +1,138 @@
-# RNA-seq FASTQ pipeline
+# RNA-seq FASTQ Pipeline
 
-Reproducible Snakemake workflow for processing raw paired-end RNA-seq FASTQ files into gene- and transcript-level count matrices.
+Reproducible Snakemake workflow for processing raw paired-end RNA-seq data from FASTQ files to gene- and transcript-level count matrices.
 
-This is **Part I** of the project:
+This repository represents **Part I** of a modular two-stage RNA-seq analysis framework:
 
-1. FASTQ → QC → trimming → alignment/pseudoalignment → count matrices
-2. Count matrices → statistics → DEGs → enrichment → figures
+### Part I — FASTQ Processing *(this repository)*
 
-## Workflow
+Raw FASTQ → quality control → trimming → alignment/pseudoalignment → count matrices
+
+### Part II — Statistical Analysis *(under development)*
+
+Count matrices → normalization → differential expression → functional enrichment → visualization and reporting
+
+---
+
+## Workflow Overview
 
 ```text
-raw FASTQ
-  ├── FastQC / MultiQC
-  ├── fastp trimming
-  ├── STAR alignment
-  ├── featureCounts gene quantification
-  ├── Salmon transcript quantification
-  └── final gene/transcript count matrices
+Raw FASTQ
+    │
+    ├── FastQC / MultiQC
+    │       └── sequencing quality assessment
+    │
+    ├── fastp
+    │       └── adapter removal and quality trimming
+    │
+    ├── STAR
+    │       └── genome alignment
+    │
+    ├── featureCounts
+    │       └── gene-level quantification
+    │
+    ├── Salmon
+    │       └── transcript-level quantification
+    │
+    └── Count matrices
+            ├── gene counts
+            └── transcript abundances
 ```
 
-## Quick start
+---
+
+## Quick Start
+
+Create the Conda environment:
 
 ```bash
 mamba env create -f envs/rnaseq.yaml
 mamba activate preeclampsia-rnaseq
+```
+
+Run the workflow:
+
+```bash
 snakemake --cores 12 --use-conda --configfile config/config.yaml
 ```
 
-## Input naming
+---
+
+## Input Data
+
+Expected FASTQ naming convention:
 
 ```text
-data/raw_fastq/{sample}_R1.fastq.gz
-data/raw_fastq/{sample}_R2.fastq.gz
+data/raw_fastq/
+├── sample01_R1.fastq.gz
+├── sample01_R2.fastq.gz
+├── sample02_R1.fastq.gz
+└── sample02_R2.fastq.gz
 ```
 
-Generate `config/samples.tsv`:
+Generate the sample sheet automatically:
 
 ```bash
-python scripts/make_samplesheet_from_fastq.py --fastq-dir data/raw_fastq --out config/samples.tsv
+python scripts/make_samplesheet_from_fastq.py \
+    --fastq-dir data/raw_fastq \
+    --out config/samples.tsv
 ```
 
-## Main outputs
+---
+
+## Main Outputs
 
 ```text
-results/qc/multiqc/multiqc_report.html
-results/alignment/star/*.sorted.bam
-results/counts/gene_counts.tsv
-results/salmon/*/quant.sf
+results/
+├── qc/
+│   └── multiqc/multiqc_report.html
+├── alignment/
+│   └── star/*.sorted.bam
+├── counts/
+│   └── gene_counts.tsv
+└── salmon/
+    └── */quant.sf
 ```
 
+---
+
+## Project Status
+
+🚧 **Active Development**
+
+The FASTQ-to-counts workflow is fully functional and can be used for RNA-seq preprocessing and quantification.
+
+A companion repository focused on downstream statistical analyses is currently under development and will include:
+
+* differential expression analysis
+* pathway and enrichment analyses
+* publication-ready visualizations
+* automated reporting
+
+---
+
+## Development Roadmap
+
+### Implemented
+
+* [x] FASTQ quality control (FastQC)
+* [x] MultiQC reporting
+* [x] Adapter and quality trimming (fastp)
+* [x] STAR genome alignment
+* [x] featureCounts gene quantification
+* [x] Salmon transcript quantification
+* [x] Gene-level count matrices
+* [x] Transcript abundance estimates
+
+### Planned
+
+* [ ] Differential expression analysis
+* [ ] Functional enrichment analysis
+* [ ] Publication-ready figures
+* [ ] Automated HTML/RMarkdown reports
+
+---
+
+## Citation
+
+If you use this workflow in your research, please cite DOI: Zenodo. https://doi.org/10.5281/zenodo.20702759
