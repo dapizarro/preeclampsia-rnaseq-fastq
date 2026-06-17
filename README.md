@@ -23,7 +23,7 @@ raw FASTQ
 
 ```bash
 mamba env create -f envs/rnaseq.yaml
-mamba activate preeclampsia-rnaseq
+mamba activate rnaseq
 snakemake --cores 12 --use-conda --configfile config/config.yaml
 ```
 
